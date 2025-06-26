@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: config-server
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+    config:
+      server:
+        git:
+          uri: https://github.com/beita6969/springcloud-config-repo
+          default-label: main
+          clone-on-start: true
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+---
+spring:
+  config:
+    activate:
+      on-profile: default
+server:
+  port: 5001
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: bus-refresh

@@ -1,0 +1,13 @@
+spring:
+  config:
+    activate:
+      on-profile: instance2
+
+server:
+  port: 5002
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: bus-refresh

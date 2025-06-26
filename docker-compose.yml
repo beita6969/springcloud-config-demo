@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  config-server-1:
+    build: .
+    container_name: config-server-1
+    ports:
+      - "5001:5001"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=default
+      - SPRING_RABBITMQ_HOST=rabbitmq
+    command: ["mvn", "spring-boot:run", "-f", "/app/config-server/pom.xml"]
+
+  config-server-2:
+    build: .
+    container_name: config-server-2
+    ports:
+      - "5002:5002"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=instance2
+      - SPRING_RABBITMQ_HOST=rabbitmq
+    command: ["mvn", "spring-boot:run", "-f", "/app/config-server/pom.xml", "-Dspring.profiles.active=instance2"]
+
+  service-provider:
+    build: .
+    container_name: service-provider
+    ports:
+      - "5003:5003"
+    depends_on:
+      - config-server-1
+      - config-server-2
+    environment:
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_CLOUD_CONFIG_URI=http://config-server-1:5001,http://config-server-2:5002
+    command: ["mvn", "spring-boot:run", "-f", "/app/service-provider/pom.xml"]
+
+  service-consumer:
+    build: .
+    container_name: service-consumer
+    ports:
+      - "5004:5004"
+    depends_on:
+      - service-provider
+    environment:
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_CLOUD_CONFIG_URI=http://config-server-1:5001,http://config-server-2:5002
+    command: ["mvn", "spring-boot:run", "-f", "/app/service-consumer/pom.xml"]

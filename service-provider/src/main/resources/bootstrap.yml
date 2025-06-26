@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: service-provider
+  cloud:
+    config:
+      uri: http://localhost:5001,http://localhost:5002
+      profile: dev
+      label: main
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: refresh,bus-refresh
